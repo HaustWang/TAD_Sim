@@ -33,10 +33,11 @@
 #include "HAL/PlatformFilemanager.h"
 #include "Misc/FileHelper.h"
 #include "Engine.h"
-#include "CommandLine.h"
+#include "Misc/CommandLine.h"
 #include "DisplayGameModeBase.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "Online/OnlineSessionNames.h"
 #include "OnlineSessionSettings.h"
 #include "Engine/LocalPlayer.h"
 #include "DisplayPlayerState.h"
@@ -124,7 +125,7 @@ void UDisplayGameInstance::Init()
     UE_LOG(LogSimSystem, Log, TEXT("Build time: %s %s"), TEXT(__DATE__), TEXT(__TIME__));
     // add tick function for game instance
     TickDelegateHandle =
-        FTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UDisplayGameInstance::Tick));
+        FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UDisplayGameInstance::Tick));
     UGameInstance::Init();
 
     // UE_LOG(LogSimSystem, Log, TEXT("Device id: %s "), *FGenericPlatformMisc::GetDeviceId());
@@ -2595,7 +2596,7 @@ void UDisplayGameInstance::Shutdown()
         UE_LOG(LogSimSystem, Log, TEXT("GameInstance Shutdown: Shut down SimModule Thread Not Exist."));
     }
 
-    FTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
+    FTSTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
 
     FPlatformProcess::ReturnSynchEventToPool(threadSuspendedEvent);
     threadSuspendedEvent = nullptr;

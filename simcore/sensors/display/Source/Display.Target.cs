@@ -15,6 +15,9 @@ public class DisplayTarget : TargetRules
             //bUseChecksInShipping = true;
             //bUseLoggingInShipping = true;
         }
+
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_3;
+        DefaultBuildSettings = BuildSettingsVersion.V4;
         ExtraModuleNames.AddRange( new string[] { "Display" } );
     }
 }

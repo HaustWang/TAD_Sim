@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 using UnrealBuildTool;
-using Tools.DotNETCommon;
+// using Tools.DotNETCommon;
 
 public class BoostLib : ModuleRules
 {
@@ -17,7 +17,7 @@ public class BoostLib : ModuleRules
     public string getBoostInclude(ReadOnlyTargetRules Target)
     {
         // windows
-        if ((Target.Platform == UnrealTargetPlatform.Win64) || (Target.Platform == UnrealTargetPlatform.Win32))
+        if (Target.Platform == UnrealTargetPlatform.Win64)
         {
             // find vcpkg
             if (System.Environment.GetEnvironmentVariable("VCPKG_ROOT", EnvironmentVariableTarget.Machine) != null)
@@ -42,7 +42,7 @@ public class BoostLib : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         string boost_path = getBoostInclude(Target);
-        Log.TraceWarning("the boost path is : {0}", boost_path);
+        // Log.TraceWarning("the boost path is : {0}", boost_path);
 
         PublicIncludePaths.AddRange(
             new string[]

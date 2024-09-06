@@ -144,10 +144,10 @@ struct Functions : TSharedFromThis<Functions>
                 FFoliageInstance instance;
                 instance.Location = p;
                 instance.Rotation = r;
-                instance.DrawScale3D = s;
+                instance.DrawScale3D = FVector3f(s.X, s.Y, s.Z);
                 instance.ZOffset = 0.f;
 
-                MeshInfo->AddInstance(IFA, FoliageType, instance);
+                MeshInfo->AddInstance(FoliageType, instance);
                 suc = 1;
             }
             succ += suc;
@@ -211,10 +211,10 @@ struct Functions : TSharedFromThis<Functions>
                 FFoliageInstance instance;
                 instance.Location = p;
                 instance.Rotation = r;
-                instance.DrawScale3D = s;
+                instance.DrawScale3D = FVector3f(s.X, s.Y, s.Z);
                 instance.ZOffset = 0.f;
 
-                MeshInfo->AddInstance(IFA, FoliageType, instance);
+                MeshInfo->AddInstance(FoliageType, instance);
                 suc = 1;
             }
             succ += suc;

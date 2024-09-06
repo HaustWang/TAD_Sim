@@ -55,7 +55,7 @@ public class AutoRoad : ModuleRules
                 "MeshDescription",
                 "StaticMeshDescription",
                 "MeshConversion",
-                "RuntimeMeshLoader"
+                "RuntimeMeshLoader",
                 // ... add other public dependencies that you statically link with here ...
             }
         );
@@ -82,7 +82,7 @@ public class AutoRoad : ModuleRules
         );
 
 
-        if ((Target.Platform == UnrealTargetPlatform.Win64) || (Target.Platform == UnrealTargetPlatform.Win32))
+        if (Target.Platform == UnrealTargetPlatform.Win64)
         {
             // Linking CoordTrans
             // Create CoordTransPath 

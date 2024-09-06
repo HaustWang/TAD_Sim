@@ -8,7 +8,7 @@
 #include "Objects/Creatures/Pedestrians/PedestrianCharacter.h"
 #include "Objects/Obstacles/ObstacleActor.h"
 #include "Managers/EnvManager.h"
-#include "SunPosition/Public/SunPosition.h"
+#include "SunPosition.h"
 #include "OutlineWidget.generated.h"
 
 USTRUCT(BlueprintType)

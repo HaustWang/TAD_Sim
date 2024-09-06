@@ -46,6 +46,7 @@ public class Protobuf : ModuleRules
                 //"Protobuf/Public",
                 //"Protobuf/SimMsg",
                 Path.Combine(ModulePath, "Public"),
+                Path.Combine(ModulePath, "Public", "utils"),
                 //Path.Combine(ThirdPartyPath, "SimModuleSDK", "Inc"),
                 //Path.Combine(ThirdPartyPath, "SimModuleSDK", "Inc/utils")
                 // ... add public include paths required here ...
@@ -105,7 +106,7 @@ public class Protobuf : ModuleRules
     {
         bool isLibrarySupported = false;
 
-        if ((Target.Platform == UnrealTargetPlatform.Win64) || (Target.Platform == UnrealTargetPlatform.Win32))
+        if (Target.Platform == UnrealTargetPlatform.Win64)
         {
             isLibrarySupported = true;
             // Protobuf

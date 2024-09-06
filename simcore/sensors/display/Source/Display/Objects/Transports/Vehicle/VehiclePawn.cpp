@@ -18,7 +18,7 @@
 #include "TP_VehicleAdv/TP_VehicleAdvPawn.h"
 #include "Framework/DisplayPlayerController.h"
 #include "Components/DriveWidget.h"
-#include "WheeledVehicleMovementComponent4W.h"
+#include "ChaosWheeledVehicleMovementComponent.h"
 
 DEFINE_LOG_CATEGORY_STATIC(SimLogVehicle, Log, All);
 
@@ -237,7 +237,9 @@ void AVehiclePawn::Update(const FSimActorInput& _Input, FSimActorOutput& _Output
                 FMath::Abs(mannedControlComponent->GetMannedPawn()->GetVehicleMovement()->GetForwardSpeed()) * 0.036f;
             int32 KPH_int = FMath::FloorToInt(KPH);
 
-            float RPM = mannedControlComponent->GetMannedPawn()->GetVehicleMovement()->GetEngineRotationSpeed();
+            UChaosWheeledVehicleMovementComponent* Vehicle4W = CastChecked<UChaosWheeledVehicleMovementComponent>(
+                mannedControlComponent->GetMannedPawn()->GetVehicleMovement());
+            float RPM = Vehicle4W->GetEngineRotationSpeed();
 
             driving_ui->UpdateSpeed(KPH_int);
             driving_ui->UpdateRPM(RPM);
@@ -246,7 +248,7 @@ void AVehiclePawn::Update(const FSimActorInput& _Input, FSimActorOutput& _Output
     else
     {
         FTransform NewTransform;
-        if (containerSceneComp && containerMeshComp && containerMeshComp->SkeletalMesh && VehicleIn->hasContainer)
+      if (containerSceneComp && containerMeshComp && containerMeshComp->GetSkinnedAsset() && VehicleIn->hasContainer)
         {
             // TODO: support toe simMoveComponent
             if (isEgoSnap)
@@ -338,9 +340,9 @@ void AVehiclePawn::BeginPlay()
     float Factor = 255.f;
     meshComp->SetDefaultCustomPrimitiveDataFloat(0, TagValue / Factor);
 
-    TArray<USceneComponent*> Children;
-    meshComp->GetChildrenComponents(false, Children);
-    for (auto* Comp : Children)
+    TArray<USceneComponent*> CurrChildren;
+    meshComp->GetChildrenComponents(false, CurrChildren);
+    for (auto* Comp : CurrChildren)
     {
         if (UPrimitiveComponent* Child = Cast<UPrimitiveComponent>(Comp))
         {

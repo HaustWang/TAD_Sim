@@ -422,8 +422,8 @@ void AUltrasonicSensor::Update(const FSensorInput& _Input, FSensorOutput& _Outpu
             ndl.length = d;
             float d2 = CalIndirectDistance(ndl, Input->timeStamp);
             uint32 u1 = 0, u2 = 0;
-            auto actor = HitInfo.Actor;
-            if (actor.IsValid() && actor->Tags.Num() > 0)
+            auto actor = HitInfo.GetActor();
+            if (nullptr != actor && actor->Tags.Num() > 0)
             {
                 u1 = FCString::Atoi(*actor->Tags[0].ToString());
                 u2 = 0;

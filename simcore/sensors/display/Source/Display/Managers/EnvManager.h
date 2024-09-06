@@ -7,7 +7,7 @@
 #include "Objects/Weather/SkyActor.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "Materials/MaterialParameterCollectionInstance.h"
-#include "SunPosition/Public/SunPosition.h"
+#include "SunPosition.h"
 #include <string>
 #include "environment.pb.h"
 #include "EnvManager.generated.h"

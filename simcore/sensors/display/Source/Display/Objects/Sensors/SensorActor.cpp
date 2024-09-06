@@ -66,7 +66,7 @@ ISimActorInterface* ASensorActor::Install(const FSensorConfig& _Config)
             AVehiclePawn* Vehicle = Cast<AVehiclePawn>(SimActor);
             if (Vehicle)
             {
-                if (_Config.installSlot == TEXT("C1") && Vehicle->containerMeshComp->SkeletalMesh)
+              if (_Config.installSlot == TEXT("C1") && Vehicle->containerMeshComp->GetSkinnedAsset())
                 {
                     UE_LOG(LogTemp, Log, TEXT("Install C1"));
                     this->AttachToComponent(

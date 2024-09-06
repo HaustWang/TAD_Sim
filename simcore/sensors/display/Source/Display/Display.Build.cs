@@ -13,22 +13,28 @@ public class Display : ModuleRules
         PublicDependencyModuleNames.AddRange(new string[]
         {
             "Core", "CoreUObject", "Engine", "InputCore", "XmlParser", "OnlineSubsystem",
-            "OnlineSubsystemUtils", "CinematicCamera", "Networking", "Sockets", "PhysXVehicles",
+            "OnlineSubsystemUtils", "CinematicCamera", "Networking", "Sockets", "ChaosVehicles",
             "ProceduralMeshComponent", "Json", "JsonUtilities", "PhysicsCore", "Slate", "SlateCore", "AutoRoad", "Json",
-            "RuntimeMeshLoader"
+            "RuntimeMeshLoader", "SunPosition",
         });
 
         //Plugin module
         PublicDependencyModuleNames.AddRange(new string[]
-            { "HadMap", "Protobuf", "BoostLib", "SunPosition", "MyUDP", "CudaResource" });
+            { "HadMap", "Protobuf", "BoostLib",  "MyUDP", "CudaResource" });
 
 
-        if (Target.Platform == UnrealTargetPlatform.Win64)
+        if (Target.Platform == UnrealTargetPlatform.Win64) {
             PublicDependencyModuleNames.AddRange(new string[] { "RTXLidar" });
+        }
 
         PrivateDependencyModuleNames.Add("OnlineSubsystem");
 
-        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "SimMsg"));
+        PublicIncludePaths.AddRange(new string[] {
+            ModuleDirectory,
+            Path.Combine(ModuleDirectory, "SimMsg"),
+
+        });
+
 
         DynamicallyLoadedModuleNames.Add("OnlineSubsystemNull");
 

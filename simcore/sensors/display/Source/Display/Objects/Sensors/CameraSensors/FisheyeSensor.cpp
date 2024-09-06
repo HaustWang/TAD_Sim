@@ -497,7 +497,7 @@ void AFisheyeSensor::Update(const FSensorInput& _Input, FSensorOutput& _Output)
         else
         {
             FReadSurfaceDataFlags ReadPixelFlags(RCM_UNorm);
-            FTextureRenderTarget2DResource* RTResource = (FTextureRenderTarget2DResource*) renderTarget2D->Resource;
+          FTextureRenderTarget2DResource* RTResource = (FTextureRenderTarget2DResource*)renderTarget2D->GetResource();
             if (RTResource)
             {
                 TArray<FColor> BitMap;
@@ -662,8 +662,8 @@ bool AFisheyeSensor::Save()
 void AFisheyeSensor::SetPostProcessSettings(FPostProcessSettings& PostProcessSettings, float screen_scale)
 {
     // 清晰度
-    PostProcessSettings.bOverride_ScreenPercentage = 1;
-    PostProcessSettings.ScreenPercentage =
+    PostProcessSettings.bOverride_ScreenPercentage_DEPRECATED = 1;
+    PostProcessSettings.ScreenPercentage_DEPRECATED =
         100.0f * screen_scale * (1 + sensorConfig.Exquisite * (sensorConfig.Exquisite > 0 ? 1 : -0.2));
 
     // bloom
@@ -673,8 +673,10 @@ void AFisheyeSensor::SetPostProcessSettings(FPostProcessSettings& PostProcessSet
     // noise
     if (sensorConfig.noise_Intensity > 0)
     {
-        PostProcessSettings.bOverride_GrainIntensity = 1;
-        PostProcessSettings.GrainIntensity = sensorConfig.noise_Intensity;
+        PostProcessSettings.bOverride_GrainIntensity_DEPRECATED = 1;
+        PostProcessSettings.bOverride_FilmGrainIntensity = 1;
+        PostProcessSettings.GrainIntensity_DEPRECATED = sensorConfig.noise_Intensity;
+        PostProcessSettings.FilmGrainIntensity = sensorConfig.noise_Intensity;
     }
 
     if (sensorConfig.LensFlares > 0)

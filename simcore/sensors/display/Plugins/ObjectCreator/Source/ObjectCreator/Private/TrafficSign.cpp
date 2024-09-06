@@ -9,7 +9,7 @@
 #include "IImageWrapper.h"
 #include "IImageWrapperModule.h"
 #include "Misc/FileHelper.h"
-#include "AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Materials/MaterialInstance.h"
 #include "EngineUtils.h"
 #include "Engine/Texture.h"
@@ -601,7 +601,7 @@ bool TrafficSign::CreateNormal(const FString& fimg, const FString& outFname)
             int dy = (int) gray[(i - 1) * wid + j] - (int) gray[(i + 1) * wid + j];
             int dx = (int) gray[i * wid + j - 1] - (int) gray[i * wid + j + 1];
             int dz = 127;
-            int base = FMath::CeilToInt(FMath::Sqrt(dx * dx + dy * dy + dz * dz));
+            int base = FMath::CeilToInt(FMath::Sqrt((float)(dx * dx + dy * dy + dz * dz)));
             c.R = dx * 127 / base + 127;
             c.G = dy * 127 / base + 127;
             c.B = dz * 255 / base;

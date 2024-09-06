@@ -69,7 +69,7 @@ void UOutlineWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 void UOutlineWidget::BeginDestroy()
 {
     Super::BeginDestroy();
-    this->RemoveFromViewport();
+    this->RemoveFromParent();
 }
 
 TArray<FVehicleInfo> UOutlineWidget::GetVehicleInfo()

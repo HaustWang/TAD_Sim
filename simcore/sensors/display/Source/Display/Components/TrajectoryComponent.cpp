@@ -168,6 +168,7 @@ void UTrajectoryComponent::UpdateSpline(TArray<struct FSplinePoint> _Points)
         return;
     }
 
+    typedef TArray<FVector> FOccluderVertexArray;
     FOccluderVertexArray Points;
     for (size_t i = 0; i < _Points.Num(); i++)
     {

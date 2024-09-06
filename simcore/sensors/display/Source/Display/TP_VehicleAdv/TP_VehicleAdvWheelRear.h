@@ -3,12 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "VehicleWheel.h"
+#include "ChaosVehicleWheel.h"
 #include "TP_VehicleAdvWheelRear.generated.h"
 
 UCLASS(config = game)
-class UTP_VehicleAdvWheelRear : public UVehicleWheel
-{
+class UTP_VehicleAdvWheelRear : public UChaosVehicleWheel {
     GENERATED_BODY()
 
 public:

@@ -8,7 +8,7 @@
 #include "DisplayPlayerController.h"
 #include "DisplayPlayerState.h"
 #include "DisplayPawn.h"
-#include "OnlineEngineInterface.h"
+#include "Net/OnlineEngineInterface.h"
 #include "DisplayGameSession.h"
 #include "HadMap/Public/HadmapManager.h"
 #include "MapGeneratedActor.h"

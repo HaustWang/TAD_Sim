@@ -119,7 +119,7 @@ bool UDataFunctionLibrary::CompareTexture(UTexture2D* Tex1, UTexture2D* Tex2)
         Tex1->UpdateResource();
 
         const FColor* FormatedImageData =
-            static_cast<const FColor*>(Tex1->PlatformData->Mips[0].BulkData.LockReadOnly());
+            static_cast<const FColor*>(Tex1->GetPlatformData()->Mips[0].BulkData.LockReadOnly());
 
         for (int32 X = 0; X < Tex1->GetSizeX(); X++)
         {
@@ -130,7 +130,7 @@ bool UDataFunctionLibrary::CompareTexture(UTexture2D* Tex1, UTexture2D* Tex2)
             }
         }
 
-        Tex1->PlatformData->Mips[0].BulkData.Unlock();
+        Tex1->GetPlatformData()->Mips[0].BulkData.Unlock();
 
         Tex1->CompressionSettings = OldCompressionSettings;
         Tex1->MipGenSettings = OldMipGenSettings;
@@ -149,7 +149,7 @@ bool UDataFunctionLibrary::CompareTexture(UTexture2D* Tex1, UTexture2D* Tex2)
         Tex2->UpdateResource();
 
         const FColor* FormatedImageData =
-            static_cast<const FColor*>(Tex2->PlatformData->Mips[0].BulkData.LockReadOnly());
+            static_cast<const FColor*>(Tex2->GetPlatformData()->Mips[0].BulkData.LockReadOnly());
 
         for (int32 X = 0; X < Tex2->GetSizeX(); X++)
         {
@@ -160,7 +160,7 @@ bool UDataFunctionLibrary::CompareTexture(UTexture2D* Tex1, UTexture2D* Tex2)
             }
         }
 
-        Tex2->PlatformData->Mips[0].BulkData.Unlock();
+        Tex2->GetPlatformData()->Mips[0].BulkData.Unlock();
 
         Tex2->CompressionSettings = OldCompressionSettings;
         Tex2->MipGenSettings = OldMipGenSettings;

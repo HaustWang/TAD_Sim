@@ -82,18 +82,18 @@ void AVehicleManager::Init(const FManagerConfig& Config)
         AVehiclePawn* NewVehicle = ASimActorFactory::SpawnSimActor<AVehiclePawn>(GetWorld(), Class, VehicleConfig);
         if (NewVehicle)
         {
-            if (UDisplayGameInstance* GI = GetGameInstance())
+            if (UDisplayGameInstance* CurrGI = GetGameInstance())
             {
                 if (NewVehicle)
                 {
                     if (NewVehicle->IsUseContainer())
                     {
                         NewVehicle->ApplyTruckCatalogOffset(
-                            GI->GetCatalogDataSource()->GetTruckOffset(VehicleConfig.Name));
+                          CurrGI->GetCatalogDataSource()->GetTruckOffset(VehicleConfig.Name));
                     }
                     else
                     {
-                        NewVehicle->ApplyCatalogOffset(GI->GetCatalogDataSource()->GetOffset(VehicleConfig.Name));
+                        NewVehicle->ApplyCatalogOffset(CurrGI->GetCatalogDataSource()->GetOffset(VehicleConfig.Name));
                     }
                 }
             }

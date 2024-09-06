@@ -6,7 +6,7 @@
 #include "DisplayGameModeBase.h"
 #include "DisplayPlayerState.h"
 #include "DisplayGameStateBase.h"
-#include "UnrealNetwork.h"
+#include "Net/UnrealNetwork.h"
 #include "Managers/TransportManager.h"
 #include "DisplayGameInstance.h"
 #include "UI/OutlineWidget.h"
@@ -244,10 +244,10 @@ void ADisplayPlayerController::PossessActor(AActor* _ActorToPossess)
         UE_LOG(SimLogPlayerController, Warning, TEXT("The Actor To Possess Is Null!"));
         return;
     }
-    APawn* Pawn = Cast<APawn>(_ActorToPossess);
-    if (Pawn)
+    APawn* CurrPawn = Cast<APawn>(_ActorToPossess);
+    if (CurrPawn)
     {
-        OnPossess(Pawn);
+      OnPossess(CurrPawn);
     }
     else
     {

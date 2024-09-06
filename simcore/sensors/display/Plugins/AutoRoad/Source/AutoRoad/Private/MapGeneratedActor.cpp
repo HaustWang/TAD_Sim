@@ -13,10 +13,11 @@
 #include "Components/StaticMeshComponent.h"
 #include "Core/OpenDriveBaseStruct.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "Runtime/CoreUObject/Public/UObject/ConstructorHelpers.h"
+#include "UObject/ConstructorHelpers.h"
 
-#include "Runtime/Engine/Classes/Components/SplineComponent.h"
-#include "Runtime/Engine/Classes/Components/SplineMeshComponent.h"
+#include "Components/SplineComponent.h"
+#include "Components/SplineMeshComponent.h"
+#include "PhysicsEngine/BodySetup.h"
 
 #include "routingmap/routing_utils.h"
 #include "common/coord_trans.h"
@@ -751,7 +752,7 @@ bool createOffsetGeom(const PointVec& originGeom, double startOffset, double end
     }
 }
 
-void AMapGeneratedActor::DrawRoadDetails(TArray<LaneBoundaryInfo>& lane_bdids)
+void AMapGeneratedActor::DrawRoadDetails(TArray<LaneBoundaryInfo>& draw_lane_bdids)
 {
     // road lane
     hadmap::txRoads _roads;
@@ -846,11 +847,10 @@ void AMapGeneratedActor::DrawRoadDetails(TArray<LaneBoundaryInfo>& lane_bdids)
                 // BoundaryInfo.LanePtr = bd.Value;
                 BoundaryInfo.Points = points;
 
-                auto section_ptr = bd.Value->getSection();
-                auto road_ptr = section_ptr->getRoad();
-                BoundaryInfo.RoadId = road_ptr->getId();
-                BoundaryInfo.SectionId = section_ptr->getId();
-                lane_bdids.Add(BoundaryInfo);
+                auto bd_section_ptr = bd.Value->getSection();
+                BoundaryInfo.RoadId = bd_section_ptr->getRoad()->getId();
+                BoundaryInfo.SectionId = bd_section_ptr->getId();
+                draw_lane_bdids.Add(BoundaryInfo);
 
                 // section start point
                 hadmap::txPoint pos_start = static_cast<const hadmap::txLineCurve*>(lane->getGeometry())->getStart();
@@ -1122,7 +1122,7 @@ void AMapGeneratedActor::DrawRoadDetails(TArray<LaneBoundaryInfo>& lane_bdids)
     UE_LOG(LogTemp, Log, TEXT("DrawMap Road finish"));
 }
 
-void AMapGeneratedActor::DrawMarkDetails(TArray<LaneBoundaryInfo>& lane_bdids)
+void AMapGeneratedActor::DrawMarkDetails(TArray<LaneBoundaryInfo>& draw_lane_bdids)
 {
     auto getOffsets =
         [](const std::vector<FVector>& opoints, const std::vector<FVector>& rightDirs, const double offsetWidth)
@@ -1149,7 +1149,7 @@ void AMapGeneratedActor::DrawMarkDetails(TArray<LaneBoundaryInfo>& lane_bdids)
     };
 
     TMap<FName, FRoadMarkData> RoadMark_Map;
-    for (auto lbd0 : lane_bdids)
+    for (auto lbd0 : draw_lane_bdids)
     {
         hadmap::txLaneBoundaryPtr boundaryPtr = lbd0.BoundaryPtr;
         auto lbd = boundaryPtr->getId();
@@ -1398,8 +1398,8 @@ void AMapGeneratedActor::DrawMarkDetails(TArray<LaneBoundaryInfo>& lane_bdids)
             int num = 0;
             for (auto& lane : lanedata)
             {
-                std::vector<FVector>& points = lane.points;
-                if (points.empty() || normaldata.empty())
+                std::vector<FVector>& lane_points = lane.points;
+              if (lane_points.empty() || normaldata.empty())
                 {
                     continue;
                 }
@@ -1409,9 +1409,9 @@ void AMapGeneratedActor::DrawMarkDetails(TArray<LaneBoundaryInfo>& lane_bdids)
                 offp[1] = FVector2D(0, lw);
                 offp[2] = FVector2D(0, -lw);
                 offp[3] = FVector2D(0, lw);
-                std::string stype = lane.stype;    // &0xff;
+                //std::string stype = lane.stype;    // &0xff;
 
-                if (points.size() < 2)
+                if (lane_points.size() < 2)
                     continue;
 
                 // get linearcolor
@@ -1451,29 +1451,30 @@ void AMapGeneratedActor::DrawMarkDetails(TArray<LaneBoundaryInfo>& lane_bdids)
                 bool flag = false;
                 FVector lastLoc;
                 float LaneDirgee = 0;
-                if (points.size() > 2)
+                if (lane_points.size() > 2)
                 {
-                    FVector Dir = points.back() - points.front();
+                  FVector Dir = lane_points.back() - lane_points.front();
                     Dir.Normalize();
                     LaneDirgee = FMath::RadiansToDegrees(FMath::Atan2(Dir.Y, Dir.X));
                 }
-                for (size_t i = 0; i < points.size(); /*++i*/)
+                for (size_t i = 0; i < lane_points.size(); /*++i*/)
                 {
-                    if (points.size() < 2)
+                  if (lane_points.size() < 2)
                         continue;
                     // const FVector& rightDir = normaldata.size() > i ? normaldata[i] : normaldata[normaldata.size() -
                     // 1];
                     const FVector& rightDir =
-                        i > 0
-                            ? FVector::CrossProduct(((points[i] - points[i - 1])).GetSafeNormal2D(), FVector::UpVector)
-                            : FVector::CrossProduct(((points[1] - points[0])).GetSafeNormal2D(), FVector::UpVector);
+                      i > 0 ? FVector::CrossProduct(((lane_points[i] - lane_points[i - 1])).GetSafeNormal2D(),
+                                                    FVector::UpVector)
+                            : FVector::CrossProduct(((lane_points[1] - lane_points[0])).GetSafeNormal2D(),
+                                                    FVector::UpVector);
 
-                    const FVector& curLoc = points[i];
+                    const FVector& curLoc = lane_points[i];
                     float Dis = 0.f;
 
                     if (i > 0)
                     {
-                        Dis = (points[i] - lastLoc).Size() * 0.01 / 5;
+                      Dis = (lane_points[i] - lastLoc).Size() * 0.01 / 5;
                         // 与新版地图编辑器保持一致，暂不启用双向道路虚线UV对齐
                         /*
                        if (LaneDirgee < 0.f)
@@ -1788,10 +1789,10 @@ void AMapGeneratedActor::DrawJunctionDetails()
                     }
                 }
 
-                for (int32 i = 0; i < Left.size(); i++)
+                for (int32 ii = 0; ii < Left.size(); ii++)
                 {
-                    Bds.push_back(Left[i]);
-                    Bds.push_back(Right[i]);
+                  Bds.push_back(Left[ii]);
+                  Bds.push_back(Right[ii]);
                 }
 
                 for (int32 lane_idx = 0; lane_idx < int32(Bds.size() - 1); lane_idx++)
@@ -1816,15 +1817,15 @@ void AMapGeneratedActor::DrawJunctionDetails()
                     // 1]->getGeometry())->getPoints(RightPoints);
                     // }
 
-                    for (int32 i = 0; i < LeftPoints.size(); i++)
+                    for (int32 ii = 0; ii < LeftPoints.size(); ii++)
                     {
-                        LonLatToLocal(LeftPoints[i].x, LeftPoints[i].y, LeftPoints[i].z);
-                        LaneVertices_Left.Add(FVector(LeftPoints[i].x, LeftPoints[i].y, LeftPoints[i].z));
+                      LonLatToLocal(LeftPoints[ii].x, LeftPoints[ii].y, LeftPoints[ii].z);
+                      LaneVertices_Left.Add(FVector(LeftPoints[ii].x, LeftPoints[ii].y, LeftPoints[ii].z));
                     }
-                    for (int32 i = 0; i < RightPoints.size(); i++)
+                    for (int32 ii = 0; ii < RightPoints.size(); ii++)
                     {
-                        LonLatToLocal(RightPoints[i].x, RightPoints[i].y, RightPoints[i].z);
-                        LaneVertices_Right.Add(FVector(RightPoints[i].x, RightPoints[i].y, RightPoints[i].z));
+                      LonLatToLocal(RightPoints[ii].x, RightPoints[ii].y, RightPoints[ii].z);
+                      LaneVertices_Right.Add(FVector(RightPoints[ii].x, RightPoints[ii].y, RightPoints[ii].z));
                     }
 
                     int32 Left_Right_Max =
@@ -2240,8 +2241,8 @@ void AMapGeneratedActor::DrawObjDetails()
                     if (iterData != userData.end())
                     {
                         float BeidgeLength = std::stof(iterData->second) * 100.f;
-                        UFloatProperty* FloatProp =
-                            FindField<UFloatProperty>(NewItem->GetClass(), TEXT("CustomLength"));
+                      FFloatProperty* FloatProp = 
+                            FindFProperty<FFloatProperty>(TEXT("CustomLength"));
 
                         if (FloatProp)
                         {
@@ -2680,7 +2681,7 @@ void AppendTriangle(FMeshDescriptionBuilder& meshDescBuilder, TArray<FVertexID> 
         FVertexInstanceID instance = meshDescBuilder.AppendInstance(vertexIDs[vertex[i].ID]);
         meshDescBuilder.SetInstanceNormal(instance, vertex[i].InstanceNormal);
         meshDescBuilder.SetInstanceUV(instance, vertex[i].InstanceUV, 0);
-        meshDescBuilder.SetInstanceColor(instance, FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+        meshDescBuilder.SetInstanceColor(instance, FVector4f(1.0f, 1.0f, 1.0f, 1.0f));
         vertexInsts.Add(instance);
     }
     // 增加此三角形
@@ -2748,7 +2749,7 @@ UStaticMesh* AMapGeneratedActor::CreateStaticMesh(const TArray<FVector>& Vertice
     UStaticMesh* staticMesh = NewObject<UStaticMesh>(this);
     staticMesh->GetStaticMaterials().Add(FStaticMaterial());    // 至少添加一个材质
     staticMesh->GetStaticMaterials()[0].UVChannelData.bInitialized = true;
-    bool Res = staticMesh->GetIsBuiltAtRuntime();
+    //bool Res = staticMesh->GetIsBuiltAtRuntime();
     staticMesh->SetIsBuiltAtRuntime(true);
 
     UStaticMesh::FBuildMeshDescriptionsParams mdParams;

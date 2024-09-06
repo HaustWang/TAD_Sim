@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "WheeledVehicle.h"
+#include "WheeledVehiclePawn.h"
 #include "TP_VehicleAdvPawn.generated.h"
 
 class UPhysicalMaterial;
@@ -14,8 +14,7 @@ class UInputComponent;
 class UAudioComponent;
 
 UCLASS(config = Game)
-class ATP_VehicleAdvPawn : public AWheeledVehicle
-{
+class ATP_VehicleAdvPawn : public AWheeledVehiclePawn {
     GENERATED_BODY()
 
     /** Spring arm that will offset the camera */

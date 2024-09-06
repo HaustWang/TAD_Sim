@@ -3,7 +3,7 @@
 
 using System.IO;
 using UnrealBuildTool;
-using Tools.DotNETCommon;
+// using Tools.DotNETCommon;
 
 public class HadMap : ModuleRules
 {
@@ -104,7 +104,7 @@ public class HadMap : ModuleRules
     {
         bool isLibrarySupported = false;
 
-        if ((Target.Platform == UnrealTargetPlatform.Win64) || (Target.Platform == UnrealTargetPlatform.Win32))
+        if (Target.Platform == UnrealTargetPlatform.Win64)
         {
             isLibrarySupported = true;
             bUseRTTI = true;
@@ -239,7 +239,7 @@ public class HadMap : ModuleRules
             string[] files = System.IO.Directory.GetFiles(LibraryPath + "/Linux/Release");
             foreach (string filepath in files)
             {
-                Log.TraceInformation(Path.Combine("MapSDK dep path: " + filepath));
+                // Log.TraceInformation(Path.Combine("MapSDK dep path: " + filepath));
                 string filename = System.IO.Path.GetFileName(filepath);
 
                 RuntimeDependencies.Add(Path.Combine("$(TargetOutputDir)/ubuntu18_20/", filename),

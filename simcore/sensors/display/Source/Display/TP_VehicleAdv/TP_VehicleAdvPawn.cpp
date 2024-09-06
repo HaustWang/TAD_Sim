@@ -13,7 +13,7 @@
 #include "Components/AudioComponent.h"
 #include "Sound/SoundCue.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
-#include "WheeledVehicleMovementComponent4W.h"
+#include "ChaosWheeledVehicleMovementComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Controller.h"
@@ -31,6 +31,8 @@ const FName ATP_VehicleAdvPawn::LookRightBinding("LookRight");
 const FName ATP_VehicleAdvPawn::EngineAudioRPM("RPM");
 
 #define LOCTEXT_NAMESPACE "VehiclePawn"
+
+using namespace Chaos;
 
 ATP_VehicleAdvPawn::ATP_VehicleAdvPawn()
 {
@@ -54,9 +56,10 @@ ATP_VehicleAdvPawn::ATP_VehicleAdvPawn()
         TEXT("/Game/VehicleAdv/PhysicsMaterials/NonSlippery.NonSlippery"));
     NonSlipperyMaterial = NonSlipperyMat.Object;
 
-    UWheeledVehicleMovementComponent4W* Vehicle4W =
-        CastChecked<UWheeledVehicleMovementComponent4W>(GetVehicleMovement());
+    UChaosWheeledVehicleMovementComponent* Vehicle4W =
+        CastChecked<UChaosWheeledVehicleMovementComponent>(GetVehicleMovement());
 
+    Vehicle4W->WheelSetups.SetNum(4);
     check(Vehicle4W->WheelSetups.Num() == 4);
 
     // Wheels/Tyres
@@ -78,36 +81,36 @@ ATP_VehicleAdvPawn::ATP_VehicleAdvPawn()
     Vehicle4W->WheelSetups[3].AdditionalOffset = FVector(0.f, 8.f, 0.f);
 
     // Adjust the tire loading
-    Vehicle4W->MinNormalizedTireLoad = 0.0f;
+    /*Vehicle4W->MinNormalizedTireLoad = 0.0f;
     Vehicle4W->MinNormalizedTireLoadFiltered = 0.2f;
     Vehicle4W->MaxNormalizedTireLoad = 2.0f;
-    Vehicle4W->MaxNormalizedTireLoadFiltered = 2.0f;
+    Vehicle4W->MaxNormalizedTireLoadFiltered = 2.0f;*/
 
     // Engine
     // Torque setup
-    Vehicle4W->MaxEngineRPM = 5700.0f;
+    Vehicle4W->EngineSetup.MaxRPM = 5700.0f;
     Vehicle4W->EngineSetup.TorqueCurve.GetRichCurve()->Reset();
     Vehicle4W->EngineSetup.TorqueCurve.GetRichCurve()->AddKey(0.0f, 400.0f);
     Vehicle4W->EngineSetup.TorqueCurve.GetRichCurve()->AddKey(1890.0f, 500.0f);
     Vehicle4W->EngineSetup.TorqueCurve.GetRichCurve()->AddKey(5730.0f, 400.0f);
 
     // Adjust the steering
-    Vehicle4W->SteeringCurve.GetRichCurve()->Reset();
-    Vehicle4W->SteeringCurve.GetRichCurve()->AddKey(0.0f, 1.0f);
-    Vehicle4W->SteeringCurve.GetRichCurve()->AddKey(40.0f, 0.7f);
-    Vehicle4W->SteeringCurve.GetRichCurve()->AddKey(120.0f, 0.6f);
+    Vehicle4W->SteeringSetup.SteeringCurve.GetRichCurve()->Reset();
+    Vehicle4W->SteeringSetup.SteeringCurve.GetRichCurve()->AddKey(0.0f, 1.0f);
+    Vehicle4W->SteeringSetup.SteeringCurve.GetRichCurve()->AddKey(40.0f, 0.7f);
+    Vehicle4W->SteeringSetup.SteeringCurve.GetRichCurve()->AddKey(120.0f, 0.6f);
 
     // Transmission
     // We want 4wd
-    Vehicle4W->DifferentialSetup.DifferentialType = EVehicleDifferential4W::LimitedSlip_4W;
+    Vehicle4W->DifferentialSetup.DifferentialType = EVehicleDifferential::AllWheelDrive;
 
     // Drive the front wheels a little more than the rear
     Vehicle4W->DifferentialSetup.FrontRearSplit = 0.65;
 
     // Automatic gearbox
-    Vehicle4W->TransmissionSetup.bUseGearAutoBox = true;
-    Vehicle4W->TransmissionSetup.GearSwitchTime = 0.15f;
-    Vehicle4W->TransmissionSetup.GearAutoBoxLatency = 1.0f;
+    Vehicle4W->TransmissionSetup.bUseAutomaticGears = true;
+    Vehicle4W->TransmissionSetup.GearChangeTime = 0.15f;
+    //Vehicle4W->TransmissionSetup.GearAutoBoxLatency = 1.0f;
 
     // Physics settings
     // Adjust the center of mass - the buggy is quite low
@@ -357,9 +360,10 @@ void ATP_VehicleAdvPawn::Tick(float Delta)
     }
 
     // Pass the engine RPM to the sound component
-    float RPMToAudioScale = 2500.0f / GetVehicleMovement()->GetEngineMaxRotationSpeed();
-    EngineSoundComponent->SetFloatParameter(
-        EngineAudioRPM, GetVehicleMovement()->GetEngineRotationSpeed() * RPMToAudioScale);
+    UChaosWheeledVehicleMovementComponent* Vehicle4W =
+        CastChecked<UChaosWheeledVehicleMovementComponent>(GetVehicleMovement());
+    float RPMToAudioScale = 2500.0f / Vehicle4W->GetEngineMaxRotationSpeed();
+    EngineSoundComponent->SetFloatParameter(EngineAudioRPM, Vehicle4W->GetEngineRotationSpeed() * RPMToAudioScale);
 }
 
 void ATP_VehicleAdvPawn::BeginPlay()

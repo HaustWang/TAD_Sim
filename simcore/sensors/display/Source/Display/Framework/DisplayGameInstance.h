@@ -7,7 +7,7 @@
 #include <map>
 
 #ifdef _MSC_VER
-#include "AllowWindowsPlatformTypes.h"
+#include "windows/AllowWindowsPlatformTypes.h"
 #endif
 // Protobuf
 #include "traffic.pb.h"
@@ -21,11 +21,11 @@
 #include "environment.pb.h"
 #include "union.pb.h"
 #ifdef _MSC_VER
-#include "HideWindowsPlatformTypes.h"
+#include "Windows/HideWindowsPlatformTypes.h"
 #endif
 
 #include "SimInterface.h"
-#include "OnlineSessionInterface.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "GameFramework/OnlineReplStructs.h"
 #include "Objects/Transports/TransportInterface.h"
 #include "DisplayGameInstance.generated.h"
@@ -541,7 +541,7 @@ private:
 
     std::string moduleName = "Display";
 
-    FDelegateHandle TickDelegateHandle;
+    FTSTicker::FDelegateHandle TickDelegateHandle;
 
     // TArray<FString> mapArray;
 

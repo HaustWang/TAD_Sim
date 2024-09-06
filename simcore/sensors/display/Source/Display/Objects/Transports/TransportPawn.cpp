@@ -19,7 +19,7 @@
 #include "Utils/DataFunctionLibrary.h"
 #include "Components/MannedControlComponent.h"
 #include "TP_VehicleAdv/TP_VehicleAdvPawn.h"
-#include "WheeledVehicleMovementComponent4W.h"
+#include "ChaosWheeledVehicleMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/TrajectoryComponent.h"
 #include "Components/SplineComponent.h"

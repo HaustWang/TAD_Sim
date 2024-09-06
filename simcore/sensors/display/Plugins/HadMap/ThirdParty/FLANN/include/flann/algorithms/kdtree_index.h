@@ -37,6 +37,7 @@
 #include <cstring>
 #include <stdarg.h>
 #include <cmath>
+#include <random>
 
 #include "flann/general.h"
 #include "flann/algorithms/nn_index.h"
@@ -265,7 +266,7 @@ protected:
         /* Construct the randomized trees. */
         for (int i = 0; i < trees_; i++) {
             /* Randomize the order of vectors to allow for unbiased sampling. */
-            std::random_shuffle(ind.begin(), ind.end());
+            std::shuffle(ind.begin(), ind.end(), std::default_random_engine());
             tree_roots_[i] = divideTree(&ind[0], int(size_) );
         }
         delete[] mean_;

@@ -48,31 +48,31 @@ struct FMeshMaterialList
 };
 
 USTRUCT(BlueprintType)
-struct FMeshInfo
+struct FBPMeshInfo
 {
     GENERATED_USTRUCT_BODY()
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "ReturnedData")
-    TArray<FVector> Vertices;
+    TArray<FVector3f> Vertices;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "ReturnedData")
     /** Vertices index */
     TArray<int32> Triangles;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "ReturnedData")
-    TArray<FVector> Normals;
+    TArray<FVector3f> Normals;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "ReturnedData")
-    TArray<FVector2D> UV0;
+    TArray<FVector2f> UV0;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "ReturnedData")
-    TArray<FVector2D> UV1;
+    TArray<FVector2f> UV1;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "ReturnedData")
-    TArray<FVector2D> UV2;
+    TArray<FVector2f> UV2;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "ReturnedData")
-    TArray<FVector2D> UV3;
+    TArray<FVector2f> UV3;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "ReturnedData")
     TArray<FLinearColor> VertexColors;
@@ -95,7 +95,7 @@ public:
     /** Contain Mesh Count  */
     int32 NumMeshes;
 
-    TArray<FMeshInfo> meshInfo;
+    TArray<FBPMeshInfo> meshInfo;
 
     TArray<TPair<int32, FString>> BaseColorTexPath;
 

@@ -17,8 +17,8 @@ class FRayTracingLidarRGS : public FGlobalShader
     BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
     SHADER_PARAMETER_SRV(RaytracingAccelerationStructure, TLAS)
     SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, Output)
-    SHADER_PARAMETER(FMatrix, CameraMatrix)
-    SHADER_PARAMETER(FMatrix, MirrorMatrix)
+    SHADER_PARAMETER(FMatrix44f, CameraMatrix)
+    SHADER_PARAMETER(FMatrix44f, MirrorMatrix)
     SHADER_PARAMETER(float, MirrorThreshold)
     SHADER_PARAMETER_SRV(StructuredBuffer<float2>, RayDirs)
     SHADER_PARAMETER_SRV(StructuredBuffer<float4>, RefDef)
@@ -36,8 +36,29 @@ class FRayTracingLidarRGS : public FGlobalShader
         return ShouldCompileRayTracingShadersForProject(Parameters.Platform);
     }
 };
+
 IMPLEMENT_GLOBAL_SHADER(
     FRayTracingLidarRGS, "/Plugin/RTXLidar/Private/RayTracingLidar.usf", "RayTracingLidarMainRGS", SF_RayGen);
+
+void ConvertMatrix(const FMatrix& src_mat, FMatrix44f& dst_mat) {
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; j++) {
+      dst_mat.M[i][j] = (float)src_mat.M[i][j];
+    }
+  }
+}
+
+FMatrix44f ConvertMatrix(const FMatrix& src_mat) {
+  FMatrix44f ret;
+  ConvertMatrix(src_mat, ret);
+  return ret;
+}
+
+FMatrix44f Multiply(const FMatrix& mat1, const FMatrix44f& mat2) {
+  FMatrix44f ret;
+  ConvertMatrix(mat1, ret);
+  return ret * mat2;
+}
 
 // Delegate Handles
 FDelegateHandle FRTXLidarSceneProxy::RenderDiffuseIndirectLightHandle;
@@ -49,7 +70,7 @@ void FRTXLidarSceneProxy::RenderDiffuseIndirectLight_RenderThread(const FScene& 
         return;
 
     FRayTracingPipelineState* Pipeline = View.RayTracingMaterialPipeline;
-    FRHIRayTracingScene* RayTracingSceneRHI = View.RayTracingScene.RayTracingSceneRHI;
+    FRHIRayTracingScene* RayTracingSceneRHI = Scene.RayTracingScene.GetRHIRayTracingScene();
     if (!RayTracingSceneRHI || !Pipeline)
     {
         return;
@@ -71,8 +92,8 @@ void FRTXLidarSceneProxy::RenderDiffuseIndirectLight_RenderThread(const FScene& 
         FVector pos = View.ViewMatrices.GetViewOrigin();
         FQuat viewRot = View.ViewMatrices.GetInvViewMatrix().ToQuat() * FRotator(90, -90, 0).Quaternion();
         FRotator rot = viewRot.Rotator();
-        RayGenParameters->CameraMatrix = FTransform(rot, pos).ToMatrixWithScale();
-        RayGenParameters->TLAS = RayTracingSceneRHI->GetShaderResourceView();
+        ConvertMatrix(FTransform(rot, pos).ToMatrixWithScale(), RayGenParameters->CameraMatrix);
+        RayGenParameters->TLAS = RayTracingSceneRHI->GetOrCreateMetadataBufferSRV(FRHICommandListImmediate::Get());
         // test
         // UE_LOG(LogTemp, Warning, TEXT("test dir:%f,%f,%f"), rot.Roll, rot.Pitch, rot.Yaw);
         //
@@ -87,24 +108,26 @@ void FRTXLidarSceneProxy::RenderDiffuseIndirectLight_RenderThread(const FScene& 
         {
             RayDirs.Push(FVector2D::ZeroVector);
         }
-        FRHIResourceCreateInfo CreateInfo;
+        FRHIResourceCreateInfo CreateInfo(TEXT("CreateInfo"));
         CreateInfo.ResourceArray = &RayDirs;
-        FStructuredBufferRHIRef RayTracingDirs = RHICreateStructuredBuffer(
+        FBufferRHIRef RayTracingDirs = FRHICommandListExecutor::GetImmediateCommandList().CreateStructuredBuffer(
             sizeof(RayDirs[0]), RayDirs.GetResourceDataSize(), BUF_Static | BUF_ShaderResource, CreateInfo);
-        FShaderResourceViewRHIRef RayDirsSRV = RHICreateShaderResourceView(RayTracingDirs);
+        FShaderResourceViewRHIRef RayDirsSRV =
+            FRHICommandListExecutor::GetImmediateCommandList().CreateShaderResourceView(RayTracingDirs);
         TResourceArray<FVector4> RefDef;
         for (const auto& ref : proxy->ComponentData.RefDef)
         {
             RefDef.Add(ref);
         }
         CreateInfo.ResourceArray = &RefDef;
-        FStructuredBufferRHIRef RayTracingRefDef = RHICreateStructuredBuffer(
+        FBufferRHIRef RayTracingRefDef = FRHICommandListExecutor::GetImmediateCommandList().CreateStructuredBuffer(
             sizeof(RefDef[0]), RefDef.GetResourceDataSize(), BUF_Static | BUF_ShaderResource, CreateInfo);
-        FShaderResourceViewRHIRef RefDefSRV = RHICreateShaderResourceView(RayTracingRefDef);
+        FShaderResourceViewRHIRef RefDefSRV =
+            FRHICommandListExecutor::GetImmediateCommandList().CreateShaderResourceView(RayTracingRefDef);
         RayGenParameters->RayDirs = RayDirsSRV;
         RayGenParameters->RefDef = RefDefSRV;
         RayGenParameters->MirrorMatrix =
-            proxy->ComponentData.symmetryPose.ToMatrixWithScale() * RayGenParameters->CameraMatrix;
+            Multiply(proxy->ComponentData.symmetryPose.ToMatrixWithScale(), RayGenParameters->CameraMatrix);
         RayGenParameters->MirrorThreshold = proxy->ComponentData.mirrorThreshold;
         RayGenParameters->f_noise_dev = proxy->ComponentData.f_noise_dev;
         RayGenParameters->f_accuracy = proxy->ComponentData.f_accuracy;
@@ -130,8 +153,8 @@ void FRTXLidarSceneProxy::RenderDiffuseIndirectLight_RenderThread(const FScene& 
     for (FRTXLidarSceneProxy* proxy : AllProxiesReadyForRender_RenderThread)
     {
         // Schedule a copy of the GPU texture to the CPU accessible GPU texture
-        GraphBuilder.RHICmdList.CopyTexture(
-            proxy->RenderTarget->GetShaderResourceRHI(), proxy->RenderTargetRHI, FRHICopyTextureInfo{});
+        GraphBuilder.RHICmdList.CopyTexture(proxy->RenderTarget->GetRHI(), proxy->RenderTargetRHI,
+                                            FRHICopyTextureInfo{});
     }
 }
 void FRTXLidarSceneProxy::ResetTextures_RenderThread(FRDGBuilder& GraphBuilder)
@@ -230,7 +253,7 @@ void URTXLidarComponent::UpdateParam()
         int RetCount = rayDegree.Num();
         if (RetCount > 1)
         {
-            int SizeX = FMath::CeilToInt(FMath::Sqrt(RetCount));
+            int SizeX = FMath::CeilToInt(FMath::Sqrt((float)RetCount));
             int SizeY = RetCount / SizeX;
             if (SizeX * SizeY < RetCount)
             {

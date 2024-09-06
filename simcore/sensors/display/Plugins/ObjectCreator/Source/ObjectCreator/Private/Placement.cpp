@@ -1080,12 +1080,12 @@ bool FPlacement::SpawnFoliageAsset(const TArray<FAssetData>& InAssets, const Con
             size.X *= cfg.scale[0];
             size.Y *= cfg.scale[1];
             size.Z *= cfg.scale[2];
-            instance.DrawScale3D = size;
+            instance.DrawScale3D = FVector3f(size.X, size.Y, size.Z);
             instance.ZOffset = 0.f;
             // instance.Flags;
             // Normalize the position
 
-            MeshInfos[fi]->AddInstance(IFA, FoliageTypes[fi], instance);
+            MeshInfos[fi]->AddInstance(FoliageTypes[fi], instance);
         }
     return true;
 }
@@ -1516,7 +1516,7 @@ bool FPlacement::Line2Pos(const Config& cfg, const SLineData& line, TArray<SPosD
             if (bHit)
             {
                 if (cfg.PosTop && dh0 == FLT_MAX)
-                    dh0 = std::max(10.f, p.Z - Result.ImpactPoint.Z);
+                    dh0 = std::max(10.f, (float)(p.Z - Result.ImpactPoint.Z));
                 Z = Result.ImpactPoint.Z;
             }
 
@@ -1602,7 +1602,7 @@ bool FPlacement::Polgyon2Pos(
     polygon.back().resize(ply.outline.Num());
     for (int i = 0; i < ply.outline.Num(); i++)
     {
-        polygon.back().at(i) = {ply.outline[i].X, ply.outline[i].Y};
+      polygon.back().at(i) = {(float)ply.outline[i].X, (float)ply.outline[i].Y};
         rawPots.Add(ply.outline[i]);
     }
     for (const auto& hole : ply.holes)
@@ -1613,7 +1613,7 @@ bool FPlacement::Polgyon2Pos(
         polygon.back().resize(hole.Num());
         for (int i = 0; i < hole.Num(); i++)
         {
-            polygon.back().at(i) = {hole[i].X, hole[i].Y};
+          polygon.back().at(i) = {(float)hole[i].X, (float)hole[i].Y};
             rawPots.Add(hole[i]);
         }
     }

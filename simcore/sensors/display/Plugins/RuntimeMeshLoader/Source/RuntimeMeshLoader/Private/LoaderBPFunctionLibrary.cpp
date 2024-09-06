@@ -7,8 +7,7 @@
 #include "ProceduralMeshConversion.h"
 
 #include "MeshDescription.h"
-#include "StaticMeshAttributes.h"
-#include "AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 
 #include "Engine/Texture.h"
 #include "Engine/TextureRenderTarget2D.h"
@@ -18,6 +17,7 @@
 #include "Runtime/ImageWrapper/Public/IImageWrapper.h"
 #include "Engine.h"
 #include "ImageUtils.h"
+#include "MaterialDomain.h"
 
 #include <assimp/Importer.hpp>     // C++ importer interface
 #include <assimp/scene.h>          // Output data structure
@@ -67,15 +67,17 @@ void FindMeshInfo(const aiScene* scene, aiNode* node, FReturnedData& result, FTr
     if (!tran.GetLocation().Equals(FVector{0.0f}, 0.01f))
     {
         bTran = true;
-        TranMat = TranMat * aiMatrix4x4::Translation(
-                                aiVector3D{tran.GetLocation().X, tran.GetLocation().Y, tran.GetLocation().Z}, tempMat);
+        TranMat = TranMat * aiMatrix4x4::Translation(aiVector3D{(ai_real)tran.GetLocation().X, (ai_real)tran.GetLocation().Y,
+                                                          (ai_real)tran.GetLocation().Z},
+                                                     tempMat);
     }
 
     if (!tran.GetScale3D().Equals(FVector{1.0f}, 0.01f))
     {
         bTran = true;
-        TranMat = TranMat * aiMatrix4x4::Scaling(
-                                aiVector3D{tran.GetScale3D().X, tran.GetScale3D().Y, tran.GetScale3D().Z}, tempMat);
+        TranMat = TranMat * aiMatrix4x4::Scaling(aiVector3D{(ai_real)tran.GetScale3D().X, (ai_real)tran.GetScale3D().Y,
+                                                            (ai_real)tran.GetScale3D().Z},
+                                                 tempMat);
     }
 
     if (!tran.GetRotation().Equals(FRotator{0.0f}.Quaternion(), 0.01f))
@@ -96,7 +98,7 @@ void FindMeshInfo(const aiScene* scene, aiNode* node, FReturnedData& result, FTr
 
         UE_LOG(LogTemp, Warning, TEXT("meshidx. %d\n"), MeshIdx);
         aiMesh* mesh = scene->mMeshes[MeshIdx];
-        FMeshInfo& mi = result.meshInfo[MeshIdx];
+        auto& mi = result.meshInfo[MeshIdx];
         MeshIdx++;
         aiMatrix4x4 tempTrans = node->mTransformation;
         // 如果变换
@@ -147,7 +149,7 @@ void FindMeshInfo(const aiScene* scene, aiNode* node, FReturnedData& result, FTr
             vertex = mi.RelativeTransform.TransformFVector4(vertex);    // TransformFVector4(vertex);
             vertex *= 100.f;
             // vertex = mi.RelativeTransform.Trans
-            mi.Vertices.Push(vertex);
+            mi.Vertices.Push(FVector3f(vertex.X, vertex.Y, vertex.Z));
 
             // Normal
             if (mesh->HasNormals())
@@ -159,37 +161,37 @@ void FindMeshInfo(const aiScene* scene, aiNode* node, FReturnedData& result, FTr
                     normal = mi.RelativeTransform.TransformFVector4(normal);
                     normal.Normalize();
                 }
-                mi.Normals.Push(FVector(0, 0, 1));
+                mi.Normals.Push(FVector3f(0, 0, 1));
                 // mi.Normals.Push(normal * -1.f);
             }
             else
             {
-                mi.Normals.Push(FVector::ZeroVector);
+                mi.Normals.Push(FVector3f::Zero());
             }
 
             // UV0 Coordinates - inconsistent coordinates
             if (mesh->HasTextureCoords(0))
             {
-                FVector2D uv = FVector2D(mesh->mTextureCoords[0][j].x, -mesh->mTextureCoords[0][j].y);
+                FVector2f uv = FVector2f(mesh->mTextureCoords[0][j].x, -mesh->mTextureCoords[0][j].y);
                 mi.UV0.Add(uv);
             }
             // UV1 Coordinates - inconsistent coordinates
             if (mesh->HasTextureCoords(1))
             {
-                FVector2D uv = FVector2D(mesh->mTextureCoords[1][j].x, -mesh->mTextureCoords[1][j].y);
+                FVector2f uv = FVector2f(mesh->mTextureCoords[1][j].x, -mesh->mTextureCoords[1][j].y);
                 mi.UV1.Add(uv);
             }
             // UV2 Coordinates - inconsistent coordinates
             if (mesh->HasTextureCoords(2))
             {
-                FVector2D uv = FVector2D(mesh->mTextureCoords[2][j].x, -mesh->mTextureCoords[2][j].y);
+                FVector2f uv = FVector2f(mesh->mTextureCoords[2][j].x, -mesh->mTextureCoords[2][j].y);
                 mi.UV2.Add(uv);
             }
 
             // UV3 Coordinates - inconsistent coordinates
             if (mesh->HasTextureCoords(3))
             {
-                FVector2D uv = FVector2D(mesh->mTextureCoords[3][j].x, -mesh->mTextureCoords[3][j].y);
+                FVector2f uv = FVector2f(mesh->mTextureCoords[3][j].x, -mesh->mTextureCoords[3][j].y);
                 mi.UV3.Add(uv);
             }
 
@@ -260,12 +262,12 @@ FMeshDescription BuildMeshDescriptionEx(UProceduralMeshComponent* ProcMeshComp)
     AttributeGetter.Register();
 
     TPolygonGroupAttributesRef<FName> PolygonGroupNames = AttributeGetter.GetPolygonGroupMaterialSlotNames();
-    TVertexAttributesRef<FVector> VertexPositions = AttributeGetter.GetVertexPositions();
-    TVertexInstanceAttributesRef<FVector> Tangents = AttributeGetter.GetVertexInstanceTangents();
+    TVertexAttributesRef<FVector3f> VertexPositions = AttributeGetter.GetVertexPositions();
+    TVertexInstanceAttributesRef<FVector3f> Tangents = AttributeGetter.GetVertexInstanceTangents();
     TVertexInstanceAttributesRef<float> BinormalSigns = AttributeGetter.GetVertexInstanceBinormalSigns();
-    TVertexInstanceAttributesRef<FVector> Normals = AttributeGetter.GetVertexInstanceNormals();
-    TVertexInstanceAttributesRef<FVector4> Colors = AttributeGetter.GetVertexInstanceColors();
-    TVertexInstanceAttributesRef<FVector2D> UVs = AttributeGetter.GetVertexInstanceUVs();
+    TVertexInstanceAttributesRef<FVector3f> Normals = AttributeGetter.GetVertexInstanceNormals();
+    TVertexInstanceAttributesRef<FVector4f> Colors = AttributeGetter.GetVertexInstanceColors();
+    TVertexInstanceAttributesRef<FVector2f> UVs = AttributeGetter.GetVertexInstanceUVs();
 
     // Materials to apply to new mesh
     const int32 NumSections = ProcMeshComp->GetNumSections();
@@ -289,7 +291,7 @@ FMeshDescription BuildMeshDescriptionEx(UProceduralMeshComponent* ProcMeshComp)
     MeshDescription.ReserveNewVertexInstances(VertexInstanceCount);
     MeshDescription.ReserveNewPolygons(PolygonCount);
     MeshDescription.ReserveNewEdges(PolygonCount * 2);
-    UVs.SetNumIndices(4);
+    UVs.SetNumChannels(4);
 
     // Create the Polygon Groups
     for (int32 SectionIdx = 0; SectionIdx < NumSections; SectionIdx++)
@@ -381,9 +383,9 @@ TMap<int32, FPolygonGroupID> BuildMaterialMapExchange(
 
     for (int32 SectionIdx = 0; SectionIdx < NumSections; SectionIdx++)
     {
-        FMeshInfo MeshInfo = ReturnedData.meshInfo[SectionIdx];
+        auto MeshInfo = ReturnedData.meshInfo[SectionIdx];
         // MeshInfo.Normals
-        UMaterialInterface* Material = UMaterial::GetDefaultMaterial(MD_Surface);
+        UMaterialInterface* Material = UMaterial::GetDefaultMaterial(EMaterialDomain::MD_Surface);
         // UMaterialInterface* Material = UMaterial::GetDefaultMaterial(MD_Surface);
         // if ( !UniqueMaterials.Contains(Material) )
         {
@@ -408,12 +410,12 @@ FMeshDescription BuildMeshDescriptionExtend(FReturnedData& MeshsData /* UProcedu
     AttributeGetter.Register();
 
     TPolygonGroupAttributesRef<FName> PolygonGroupNames = AttributeGetter.GetPolygonGroupMaterialSlotNames();
-    TVertexAttributesRef<FVector> VertexPositions = AttributeGetter.GetVertexPositions();
-    TVertexInstanceAttributesRef<FVector> Tangents = AttributeGetter.GetVertexInstanceTangents();
+    TVertexAttributesRef<FVector3f> VertexPositions = AttributeGetter.GetVertexPositions();
+    TVertexInstanceAttributesRef<FVector3f> Tangents = AttributeGetter.GetVertexInstanceTangents();
     TVertexInstanceAttributesRef<float> BinormalSigns = AttributeGetter.GetVertexInstanceBinormalSigns();
-    TVertexInstanceAttributesRef<FVector> Normals = AttributeGetter.GetVertexInstanceNormals();
-    TVertexInstanceAttributesRef<FVector4> Colors = AttributeGetter.GetVertexInstanceColors();
-    TVertexInstanceAttributesRef<FVector2D> UVs = AttributeGetter.GetVertexInstanceUVs();
+    TVertexInstanceAttributesRef<FVector3f> Normals = AttributeGetter.GetVertexInstanceNormals();
+    TVertexInstanceAttributesRef<FVector4f> Colors = AttributeGetter.GetVertexInstanceColors();
+    TVertexInstanceAttributesRef<FVector2f> UVs = AttributeGetter.GetVertexInstanceUVs();
 
     // Materials to apply to new mesh
 
@@ -428,7 +430,7 @@ FMeshDescription BuildMeshDescriptionExtend(FReturnedData& MeshsData /* UProcedu
     // Calculate the totals for each ProcMesh element type
     for (int32 SectionIdx = 0; SectionIdx < NumSections; SectionIdx++)
     {
-        FMeshInfo MeshInfo = MeshsData.meshInfo[SectionIdx];
+        auto MeshInfo = MeshsData.meshInfo[SectionIdx];
 
         VertexCount += MeshInfo.Vertices.Num();             // ProcSection->ProcVertexBuffer.Num();
         VertexInstanceCount += MeshInfo.Triangles.Num();    // ProcSection->ProcIndexBuffer.Num();
@@ -439,14 +441,14 @@ FMeshDescription BuildMeshDescriptionExtend(FReturnedData& MeshsData /* UProcedu
     MeshDescription.ReserveNewVertexInstances(VertexInstanceCount);
     MeshDescription.ReserveNewPolygons(PolygonCount);
     MeshDescription.ReserveNewEdges(PolygonCount * 2);
-    UVs.SetNumIndices(4);
+    UVs.SetNumChannels(4);
 
     // Create the Polygon Groups
     for (int32 SectionIdx = 0; SectionIdx < NumSections; SectionIdx++)
     {
-        FMeshInfo MeshInfo = MeshsData.meshInfo[SectionIdx];
+        auto MeshInfo = MeshsData.meshInfo[SectionIdx];
 
-        UMaterialInterface* Material = UMaterial::GetDefaultMaterial(MD_Surface);
+        UMaterialInterface* Material = UMaterial::GetDefaultMaterial(EMaterialDomain::MD_Surface);
 
         FPolygonGroupID* PolygonGroupID = UniqueMaterials.Find(SectionIdx);
         check(PolygonGroupID != nullptr);
@@ -456,7 +458,7 @@ FMeshDescription BuildMeshDescriptionExtend(FReturnedData& MeshsData /* UProcedu
     // Add Vertex and VertexInstance and polygon for each section
     for (int32 SectionIdx = 0; SectionIdx < NumSections; SectionIdx++)
     {
-        FMeshInfo MeshInfo = MeshsData.meshInfo[SectionIdx];
+        auto MeshInfo = MeshsData.meshInfo[SectionIdx];
         FPolygonGroupID PolygonGroupID = PolygonGroupForSection[SectionIdx];
         // Create the vertex
         int32 NumVertex = MeshInfo.Vertices.Num();
@@ -469,7 +471,7 @@ FMeshDescription BuildMeshDescriptionExtend(FReturnedData& MeshsData /* UProcedu
 
         for (int32 VertexIndex = 0; VertexIndex < NumVertex; ++VertexIndex)
         {
-            FVector Vert = MeshInfo.Vertices[VertexIndex];
+            auto Vert = MeshInfo.Vertices[VertexIndex];
 
             const FVertexID VertexID = MeshDescription.CreateVertex();
             VertexPositions[VertexID] = Vert;
@@ -489,7 +491,7 @@ FMeshDescription BuildMeshDescriptionExtend(FReturnedData& MeshsData /* UProcedu
             const FVertexInstanceID VertexInstanceID = MeshDescription.CreateVertexInstance(VertexID);
             IndiceIndexToVertexInstanceID.Add(IndiceIndex, VertexInstanceID);
 
-            FVector ProcVertex = MeshInfo.Vertices[VertexIndex];    // FProcMeshVertex& ProcVertex =
+            auto ProcVertex = MeshInfo.Vertices[VertexIndex];    // FProcMeshVertex& ProcVertex =
                                                                     // ProcSection->ProcVertexBuffer[VertexIndex];
             FProcMeshTangent VertexTanents = MeshInfo.Tangents[VertexIndex];
 
@@ -769,7 +771,7 @@ UStaticMesh* URuntimeMeshLoader::LoadStaticMeshFromFBX(const FString& FilePath, 
     UStaticMesh* StaticMesh = NewObject<UStaticMesh>(this, MeshName, RF_Public | RF_Standalone);
 
     StaticMesh->InitResources();
-    StaticMesh->LightingGuid = FGuid::NewGuid();
+    StaticMesh->SetLightingGuid();
     TArray<const FMeshDescription*> arr;
     arr.Add(&MeshDescription);
 
@@ -787,7 +789,7 @@ UStaticMesh* URuntimeMeshLoader::LoadStaticMeshFromFBX(const FString& FilePath, 
         Socket->RelativeLocation = Elem.Value;
     }
 
-    FStaticMeshRenderData* const RenderData = StaticMesh->RenderData.Get();
+    FStaticMeshRenderData* const RenderData = StaticMesh->GetRenderData();
 
     int32 LODIndex = 0;
     int32 MaxLODs = RenderData->LODResources.Num();
@@ -836,7 +838,7 @@ UStaticMesh* URuntimeMeshLoader::LoadStaticMeshFromFBX(const FString& FilePath, 
 
                 FStaticMaterial&& StaticMat = FStaticMaterial(Material);
                 StaticMat.UVChannelData.bInitialized = true;
-                StaticMesh->StaticMaterials.Add(StaticMat);
+                StaticMesh->GetStaticMaterials().Add(StaticMat);
 
                 LoadedCache.MIDs.Add(SectionIdx, Material);
             }
@@ -850,11 +852,11 @@ UStaticMesh* URuntimeMeshLoader::LoadStaticMeshFromFBX(const FString& FilePath, 
 
 bool URuntimeMeshLoader::IsOpaqueTexture(UTexture2D* Tex)
 {
-    FTexture2DMipMap* MyMipMap = &Tex->PlatformData->Mips[0];
+  FTexture2DMipMap* MyMipMap = &Tex->GetPlatformData()->Mips[0];
     FByteBulkData* RawImageData = &MyMipMap->BulkData;
     // FColor* FormatedImageData = static_cast<FColor*>(RawImageData->Lock(LOCK_READ_ONLY));
 
-    uint8* MipData = static_cast<uint8*>(Tex->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_ONLY));
+    uint8* MipData = static_cast<uint8*>(Tex->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_ONLY));
     FColor Test = FColor(MipData[0], MipData[1], MipData[2], MipData[3]);
     uint32 PixelX = 0, PixelY = 0;
     uint32 TextureWidth = MyMipMap->SizeX, TextureHeight = MyMipMap->SizeY;
@@ -876,17 +878,17 @@ bool URuntimeMeshLoader::IsOpaqueTexture(UTexture2D* Tex)
                 }
                 else
                 {
-                    Tex->PlatformData->Mips[0].BulkData.Unlock();
+                  Tex->GetPlatformData()->Mips[0].BulkData.Unlock();
                     return false;
                 }
             }
             else if (LinearPixelColor.A != AlphaStencil)
             {
-                Tex->PlatformData->Mips[0].BulkData.Unlock();
+              Tex->GetPlatformData()->Mips[0].BulkData.Unlock();
                 return false;
             }
         }
     }
-    Tex->PlatformData->Mips[0].BulkData.Unlock();
+    Tex->GetPlatformData()->Mips[0].BulkData.Unlock();
     return true;
 }

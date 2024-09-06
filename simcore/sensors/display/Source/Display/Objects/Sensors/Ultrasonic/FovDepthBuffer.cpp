@@ -122,7 +122,7 @@ bool AFovDepthBuffer::GetCaptureImage(TArray<FColor>& BitMap)
         return true;
     }
     // 失败则使用ue自带函数
-    FTextureRenderTarget2DResource* RTResource = (FTextureRenderTarget2DResource*) renderTarget2D->Resource;
+    FTextureRenderTarget2DResource* RTResource = (FTextureRenderTarget2DResource*) renderTarget2D->GetResource();
     if (RTResource)
     {
         FReadSurfaceDataFlags ReadPixelFlags(RCM_UNorm);

@@ -6,7 +6,8 @@
 #include "XmlFile.h"
 #include "DisplayGameInstance.h"
 #include "HadmapManager.h"
-#include "CommandLine.h"
+#include "Misc/CommandLine.h"
+#include "Components/SkeletalMeshComponent.h"
 
 void Age::YearEnd()
 {

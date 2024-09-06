@@ -112,8 +112,8 @@ void linetrace(UWorld* world, uint32 scanfrom, uint32 scanto, const FTLidarMeasu
                 p->d = d;
                 p->tag_c = 40000000u;
                 p->tag_t = 1u;
-                auto actor = HitInfo.Actor;
-                if (actor.IsValid() && actor->Tags.Num() > 0)
+                auto actor = HitInfo.GetActor();
+                if (nullptr != actor && actor->Tags.Num() > 0)
                 {
                     uint32 u1 = FCString::Atoi(*actor->Tags[0].ToString());
                     uint32 u2 = 0;
