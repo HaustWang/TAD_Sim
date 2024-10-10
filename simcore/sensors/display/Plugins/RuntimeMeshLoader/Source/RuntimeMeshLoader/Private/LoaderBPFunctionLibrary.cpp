@@ -317,7 +317,7 @@ FMeshDescription BuildMeshDescriptionEx(UProceduralMeshComponent* ProcMeshComp)
         {
             FProcMeshVertex& Vert = ProcSection->ProcVertexBuffer[VertexIndex];
             const FVertexID VertexID = MeshDescription.CreateVertex();
-            VertexPositions[VertexID] = Vert.Position;
+            VertexPositions[VertexID] = FVector3f(Vert.Position);
             VertexIndexToVertexID.Add(VertexIndex, VertexID);
         }
         // Create the VertexInstance
@@ -334,16 +334,16 @@ FMeshDescription BuildMeshDescriptionEx(UProceduralMeshComponent* ProcMeshComp)
 
             FProcMeshVertex& ProcVertex = ProcSection->ProcVertexBuffer[VertexIndex];
 
-            Tangents[VertexInstanceID] = ProcVertex.Tangent.TangentX;
-            Normals[VertexInstanceID] = ProcVertex.Normal;
+            Tangents[VertexInstanceID] = FVector3f(ProcVertex.Tangent.TangentX);
+            Normals[VertexInstanceID] = FVector3f(ProcVertex.Normal);
             BinormalSigns[VertexInstanceID] = ProcVertex.Tangent.bFlipTangentY ? -1.f : 1.f;
 
             Colors[VertexInstanceID] = FLinearColor(ProcVertex.Color);
 
-            UVs.Set(VertexInstanceID, 0, ProcVertex.UV0);
-            UVs.Set(VertexInstanceID, 1, ProcVertex.UV1);
-            UVs.Set(VertexInstanceID, 2, ProcVertex.UV2);
-            UVs.Set(VertexInstanceID, 3, ProcVertex.UV3);
+            UVs.Set(VertexInstanceID, 0, FVector2f(ProcVertex.UV0));
+            UVs.Set(VertexInstanceID, 1, FVector2f(ProcVertex.UV1));
+            UVs.Set(VertexInstanceID, 2, FVector2f(ProcVertex.UV2));
+            UVs.Set(VertexInstanceID, 3, FVector2f(ProcVertex.UV3));
         }
 
         // Create the polygons for this section
@@ -498,7 +498,7 @@ FMeshDescription BuildMeshDescriptionExtend(FReturnedData& MeshsData /* UProcedu
             FLinearColor VertexColor = MeshInfo.VertexColors.Num() > VertexIndex ? MeshInfo.VertexColors[VertexIndex]
                                                                                  : FLinearColor(1.0, 0.0, 0.0);
 
-            Tangents[VertexInstanceID] = VertexTanents.TangentX;          // ProcVertex.Tangent.TangentX;
+            Tangents[VertexInstanceID] = FVector3f(VertexTanents.TangentX);          // ProcVertex.Tangent.TangentX;
             Normals[VertexInstanceID] = MeshInfo.Normals[VertexIndex];    // ProcVertex.Normal;
             BinormalSigns[VertexInstanceID] = VertexTanents.bFlipTangentY ? -1.f : 1.f;
 
